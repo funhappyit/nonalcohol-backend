@@ -26,7 +26,7 @@ public class Member {
     private int age;             // 나이
 
     private String status;       // 활동 상태: "참여", "비참여"
-    private String role;         // 역할: "운영자", "일반멤버"
+    private String role; // 예: ROLE_MEMBER, ROLE_ADMIN
 
     private String username; // 로그인 ID
     private String password; // 로그인 PW

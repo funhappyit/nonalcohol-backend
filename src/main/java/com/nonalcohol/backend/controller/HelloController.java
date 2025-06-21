@@ -8,8 +8,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class HelloController {
 
-    @GetMapping("/hello")
-    public String hello(){
-        return "Hello from Spring Boot!";
+
+    @GetMapping("/admin/hello")
+    public String admin() {
+        return "관리자 전용!";
+    }
+
+    @GetMapping("/member/hello")
+    public String member() {
+        return "멤버 또는 관리자 접근 가능!";
     }
 }
