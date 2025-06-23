@@ -1,5 +1,6 @@
 package com.nonalcohol.backend.controller;
 
+import com.nonalcohol.backend.dto.MemberDto;
 import com.nonalcohol.backend.entity.Member;
 import com.nonalcohol.backend.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,32 @@ public class MemberController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "해당 사용자가 존재하지 않습니다"));
         }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<MemberDto> getMember(@PathVariable Long id) {
+        return memberRepository.findById(id)
+                .map(m -> {
+                    MemberDto dto = new MemberDto(
+                            m.getId(), m.getName(), m.getNickname(),
+                            m.getPhone(), m.getRegion(), m.getAge(),
+                            m.getStatus(), m.getRole(), m.getUsername());
+                    return ResponseEntity.ok(dto);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Member updated) {
+        return memberRepository.findById(id).map(member -> {
+            member.setName(updated.getName());
+            member.setPhone(updated.getPhone());
+            member.setRegion(updated.getRegion());
+            member.setAge(updated.getAge());
+            member.setRole(updated.getRole());
+            memberRepository.save(member);
+            return ResponseEntity.ok(member);
+        }).orElse(ResponseEntity.notFound().build());
     }
 
 }

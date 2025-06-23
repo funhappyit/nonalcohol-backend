@@ -1,5 +1,6 @@
 package com.nonalcohol.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -7,8 +8,7 @@ import jakarta.persistence.Id;
 import lombok.*;
 
 @Entity
-@Getter
-@Setter
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -29,6 +29,8 @@ public class Member {
     private String role; // 예: ROLE_MEMBER, ROLE_ADMIN
 
     private String username; // 로그인 ID
+
+    @JsonIgnore
     private String password; // 로그인 PW
 
 }
