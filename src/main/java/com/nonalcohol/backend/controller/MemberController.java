@@ -1,6 +1,7 @@
 package com.nonalcohol.backend.controller;
 
 import com.nonalcohol.backend.dto.MemberDto;
+import com.nonalcohol.backend.dto.SimpleMemberRegisterDto;
 import com.nonalcohol.backend.entity.Member;
 import com.nonalcohol.backend.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +29,15 @@ public class MemberController {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
 
-        // 기본 role을 설정하려면 아래 주석 해제 가능
-        // member.setRole("ROLE_MEMBER");
-
         // DB에 저장
         Member saved = memberRepository.save(member);
         return ResponseEntity.ok(saved);
+    }
+
+    @PostMapping("/simple")
+    public MemberDto registerSimpleMember(@RequestBody SimpleMemberRegisterDto dto) {
+        Member saved = memberRepository.save(dto.toEntity());
+        return MemberDto.from(saved);
     }
 
     // ✅ 로그인 (POST /api/members/login)
@@ -73,30 +77,34 @@ public class MemberController {
     @GetMapping("/{id}")
     public ResponseEntity<MemberDto> getMember(@PathVariable Long id) {
         return memberRepository.findById(id)
-                .map(m -> {
-                    // Member → MemberDto 변환 후 응답
-                    MemberDto dto = new MemberDto(
-                            m.getId(), m.getName(), m.getNickname(),
-                            m.getPhone(), m.getRegion(), m.getAge(),
-                            m.getStatus(), m.getRole(), m.getUsername());
-                    return ResponseEntity.ok(dto);
-                })
+                .map(member -> ResponseEntity.ok(MemberDto.from(member)))
                 .orElse(ResponseEntity.notFound().build());
     }
+
 
     // ✅ 회원 정보 수정 (PUT /api/members/{id})
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Member updated) {
         return memberRepository.findById(id).map(member -> {
-            // 필요한 필드만 업데이트
+            // 일반 정보 업데이트
             member.setName(updated.getName());
             member.setPhone(updated.getPhone());
             member.setRegion(updated.getRegion());
             member.setAge(updated.getAge());
             member.setRole(updated.getRole());
 
-            memberRepository.save(member); // 저장
-            return ResponseEntity.ok(member); // 수정된 회원 반환
-        }).orElse(ResponseEntity.notFound().build()); // ID가 없을 경우 404 반환
+            // ✅ 신입 여부, 입장일, 마감일도 업데이트
+            member.setIsNewcomer(updated.getIsNewcomer());
+            member.setJoinedDate(updated.getJoinedDate());
+
+            // 마감일은 입장일 + 1개월로 자동 설정
+            if (updated.getJoinedDate() != null) {
+                member.setAttendanceDeadline(updated.getJoinedDate().plusMonths(1));
+            }
+
+            memberRepository.save(member);
+            return ResponseEntity.ok(member);
+        }).orElse(ResponseEntity.notFound().build());
     }
+
 }

@@ -67,26 +67,82 @@ public class AdminEventController {
     // GET /api/admin/events
     @GetMapping
     public List<EventWithMembersDto> getEventsWithUsernames() {
-        List<Event> events = eventRepository.findAll(); // 모든 벙 조회
+        List<Event> events = eventRepository.findAll();
         List<EventWithMembersDto> result = new ArrayList<>();
 
         for (Event event : events) {
             EventWithMembersDto dto = new EventWithMembersDto();
+            dto.setId(event.getId());
             dto.setTitle(event.getTitle());
             dto.setLocation(event.getLocation());
             dto.setDate(event.getDate());
 
-            // 해당 벙의 출석자 목록 조회 → username만 추출
-            List<Attendance> attendances = attendanceRepository.findByEvent(event);
-            List<String> usernames = attendances.stream()
-                    .map(a -> a.getMember().getUsername())
-                    .collect(Collectors.toList());
+            List<Attendance> attendances = attendanceRepository.findByEventWithMember(event);
 
-            dto.setUsernames(usernames); // username 리스트 담기
+
+            List<String> memberNames = new ArrayList<>();
+            List<Long> memberIds = new ArrayList<>();
+
+            for (Attendance a : attendances) {
+                memberNames.add(a.getMember().getName()); // ✅ 이름으로
+                memberIds.add(a.getMember().getId()); // ✅ 추가
+            }
+
+            dto.setMemberNames(memberNames);
+            dto.setMemberIds(memberIds); // ✅ 추가
+
             result.add(dto);
         }
 
         return result;
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateEventWithMembers(@PathVariable Long id, @RequestBody EventWithMembersDto dto) {
+        return eventRepository.findById(id).map(event -> {
+            // 🔁 이벤트 정보 수정
+            event.setTitle(dto.getTitle());
+            event.setLocation(dto.getLocation());
+            event.setDate(dto.getDate());
+            eventRepository.save(event);
+
+            // 🔁 기존 참석 기록 삭제
+            List<Attendance> oldAttendances = attendanceRepository.findByEvent(event);
+            attendanceRepository.deleteAll(oldAttendances);
+
+            // 🔁 새로운 참석자 등록
+            for (Long memberId : dto.getMemberIds()) {
+                Member member = memberRepository.findById(memberId)
+                        .orElseThrow(() -> new RuntimeException("회원 없음"));
+                Attendance newAttendance = Attendance.builder()
+                        .event(event)
+                        .member(member)
+                        .status("참석")
+                        .build();
+                attendanceRepository.save(newAttendance);
+            }
+
+            return ResponseEntity.ok().build();
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+
+    // ✅ 벙 삭제
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteEvent(@PathVariable Long id) {
+        return eventRepository.findById(id).map(event -> {
+            // 관련 참석 기록 먼저 삭제
+            List<Attendance> attendances = attendanceRepository.findByEvent(event);
+            attendanceRepository.deleteAll(attendances);
+
+            // 이벤트 삭제
+            eventRepository.delete(event);
+            return ResponseEntity.ok().build();
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+
+
+
 }
 
