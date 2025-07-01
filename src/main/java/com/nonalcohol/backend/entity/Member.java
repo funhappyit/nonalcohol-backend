@@ -22,7 +22,7 @@ public class Member {
 
     private String phone;        // 연락처
     private String region;       // 지역 (ex. 군자, 건대)
-    private int age;             // 나이
+    private String age;             // 나이
 
     private String status;       // 활동 상태: "참여", "비참여"
     private String role; // 예: ROLE_MEMBER, ROLE_ADMIN

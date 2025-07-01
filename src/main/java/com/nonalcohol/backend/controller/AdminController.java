@@ -2,20 +2,18 @@ package com.nonalcohol.backend.controller;
 
 import com.nonalcohol.backend.dto.AttendanceStatDto;
 import com.nonalcohol.backend.dto.MemberDto;
-import com.nonalcohol.backend.entity.Attendance;
 import com.nonalcohol.backend.entity.Member;
 import com.nonalcohol.backend.repository.AttendanceRepository;
+import com.nonalcohol.backend.repository.AttendanceRepositoryCustom;
 import com.nonalcohol.backend.repository.MemberRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 // 🔧 AdminController.java
 // 관리자용 회원 조회 및 삭제 기능을 제공하는 REST 컨트롤러
@@ -26,17 +24,32 @@ public class AdminController {
 
     private final MemberRepository memberRepository;
     private final AttendanceRepository attendanceRepository; // ✅ 추가
+    private final AttendanceRepositoryCustom attendanceRepositoryCustom;
     // 💡 생성자 주입 방식으로 Repository 사용
-    public AdminController(MemberRepository memberRepository, AttendanceRepository attendanceRepository) {
+    public AdminController(MemberRepository memberRepository, AttendanceRepository attendanceRepository, AttendanceRepositoryCustom attendanceRepositoryCustom) {
         this.memberRepository = memberRepository;
         this.attendanceRepository = attendanceRepository;
+        this.attendanceRepositoryCustom = attendanceRepositoryCustom;
     }
 
     // ✅ 전체 회원 목록 조회 API (GET /api/admin/members)
     @GetMapping("/members")
-    public Page<MemberDto> getAllMembers(Pageable pageable) {
-        return memberRepository.findAll(pageable)
-                .map(MemberDto::from); // Entity → DTO 변환
+    public Page<MemberDto> getAllMembers(@RequestParam(required = false) String keyword,
+                                         Pageable pageable) {
+        Page<Member> page;
+
+        if (keyword != null && !keyword.isBlank()) {
+            page = memberRepository.searchByKeyword(keyword, pageable);
+        } else {
+            Pageable sorted = PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    Sort.by(Sort.Order.asc("role"), Sort.Order.asc("name"))
+            );
+            page = memberRepository.findAll(sorted);
+        }
+
+        return page.map(MemberDto::from);
     }
 
     // ✅ 회원 삭제 API (DELETE /api/admin/members/{id})
@@ -49,24 +62,10 @@ public class AdminController {
     }
 
     @GetMapping("/attendance/stats")
-    public List<AttendanceStatDto> getAttendanceStats() {
-        List<AttendanceStatDto> stats = attendanceRepository.countAttendanceStats();
-
-        // 👇 전체 회원 조회 후 참석 기록이 없는 회원 추가
-        Set<Long> attendedIds = stats.stream()
-                .map(AttendanceStatDto::getId)
-                .collect(Collectors.toSet());
-
-        List<AttendanceStatDto> nonAttendees = memberRepository.findAll().stream()
-                .filter(m -> !attendedIds.contains(m.getId()))
-                .map(m -> new AttendanceStatDto(m.getId(), m.getName(), m.getUsername(), 0L))
-                .toList();
-
-        stats.addAll(nonAttendees);
-
-        return stats.stream()
-                .sorted(Comparator.comparingLong(AttendanceStatDto::getCount).reversed())
-                .toList();
+    public List<AttendanceStatDto> getStatsForMonth(@RequestParam("month") int month) {
+        String monthStr = String.format("%02d", month); // 6 → "06"
+        return attendanceRepositoryCustom.countAttendanceStatsByMonth(monthStr);
     }
+
 
 }

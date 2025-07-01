@@ -10,7 +10,7 @@ public record MemberDto(
         String nickname,
         String phone,
         String region,
-        int age,
+        String age,
         String status,
         String role,
         String username,
