@@ -5,6 +5,7 @@ import com.nonalcohol.backend.entity.Attendance;
 import com.nonalcohol.backend.entity.Event;
 import com.nonalcohol.backend.entity.Member;
 import com.nonalcohol.backend.repository.AttendanceRepository;
+import com.nonalcohol.backend.repository.AttendanceRepositoryCustom;
 import com.nonalcohol.backend.repository.EventRepository;
 import com.nonalcohol.backend.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class AdminEventController {
     private final EventRepository eventRepository;         // 벙 저장소
     private final MemberRepository memberRepository;       // 회원 저장소
     private final AttendanceRepository attendanceRepository; // 출석 저장소
+    private final AttendanceRepositoryCustom attendanceRepositoryCustom;
 
     // ✅ 벙 단독 생성 (참가자 없이)
     // POST /api/admin/events
@@ -77,7 +79,7 @@ public class AdminEventController {
             dto.setLocation(event.getLocation());
             dto.setDate(event.getDate());
 
-            List<Attendance> attendances = attendanceRepository.findByEventWithMember(event);
+            List<Attendance> attendances = attendanceRepositoryCustom.findByEventWithMember(event);
 
 
             List<String> memberNames = new ArrayList<>();
@@ -107,7 +109,7 @@ public class AdminEventController {
             eventRepository.save(event);
 
             // 🔁 기존 참석 기록 삭제
-            List<Attendance> oldAttendances = attendanceRepository.findByEvent(event);
+            List<Attendance> oldAttendances = attendanceRepositoryCustom.findByEvent(event);
             attendanceRepository.deleteAll(oldAttendances);
 
             // 🔁 새로운 참석자 등록
@@ -132,7 +134,7 @@ public class AdminEventController {
     public ResponseEntity<?> deleteEvent(@PathVariable Long id) {
         return eventRepository.findById(id).map(event -> {
             // 관련 참석 기록 먼저 삭제
-            List<Attendance> attendances = attendanceRepository.findByEvent(event);
+            List<Attendance> attendances = attendanceRepositoryCustom.findByEvent(event);
             attendanceRepository.deleteAll(attendances);
 
             // 이벤트 삭제

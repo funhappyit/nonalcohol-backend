@@ -3,9 +3,9 @@ package com.nonalcohol.backend.controller;
 import com.nonalcohol.backend.dto.AttendanceStatDto;
 import com.nonalcohol.backend.dto.MemberDto;
 import com.nonalcohol.backend.entity.Member;
-import com.nonalcohol.backend.repository.AttendanceRepository;
 import com.nonalcohol.backend.repository.AttendanceRepositoryCustom;
 import com.nonalcohol.backend.repository.MemberRepository;
+import com.nonalcohol.backend.repository.MemberRepositoryCustom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,13 +23,13 @@ import java.util.List;
 public class AdminController {
 
     private final MemberRepository memberRepository;
-    private final AttendanceRepository attendanceRepository; // ✅ 추가
     private final AttendanceRepositoryCustom attendanceRepositoryCustom;
+    private final MemberRepositoryCustom memberRepositoryCustom;
     // 💡 생성자 주입 방식으로 Repository 사용
-    public AdminController(MemberRepository memberRepository, AttendanceRepository attendanceRepository, AttendanceRepositoryCustom attendanceRepositoryCustom) {
+    public AdminController(MemberRepository memberRepository, AttendanceRepositoryCustom attendanceRepositoryCustom, MemberRepositoryCustom memberRepositoryCustom) {
         this.memberRepository = memberRepository;
-        this.attendanceRepository = attendanceRepository;
         this.attendanceRepositoryCustom = attendanceRepositoryCustom;
+        this.memberRepositoryCustom = memberRepositoryCustom;
     }
 
     // ✅ 전체 회원 목록 조회 API (GET /api/admin/members)
@@ -39,7 +39,7 @@ public class AdminController {
         Page<Member> page;
 
         if (keyword != null && !keyword.isBlank()) {
-            page = memberRepository.searchByKeyword(keyword, pageable);
+            page = memberRepositoryCustom.searchByKeyword(keyword, pageable);
         } else {
             Pageable sorted = PageRequest.of(
                     pageable.getPageNumber(),
