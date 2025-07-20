@@ -2,6 +2,8 @@ package com.nonalcohol.backend.service;
 
 import com.nonalcohol.backend.dto.LabelCountDto;
 import com.nonalcohol.backend.dto.MemberRankingDto;
+import com.nonalcohol.backend.dto.WeeklyParticipationDto;
+import com.nonalcohol.backend.repository.AttendanceRepository;
 import com.nonalcohol.backend.repository.AttendanceRepositoryCustom;
 import com.nonalcohol.backend.repository.MemberRepository;
 import com.nonalcohol.backend.repository.MemberRepositoryCustom;
@@ -44,6 +46,16 @@ public class DashboardService {
                 .sorted(Comparator.comparingInt(MemberRankingDto::getCount).reversed())
                 .collect(Collectors.toList());
     }
+
+    public List<WeeklyParticipationDto> getWeeklyParticipationStats() {
+        return attendanceRepositoryCustom.getWeeklyParticipation();
+    }
+
+    public List<LabelCountDto> getAgeDistribution() {
+        return memberRepositoryCustom.getAgeDistribution(); // 이미 연도순으로 정렬되어 있음
+    }
+
+
 
 
 }

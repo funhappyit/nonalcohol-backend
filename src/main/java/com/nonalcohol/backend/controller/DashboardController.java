@@ -2,6 +2,7 @@ package com.nonalcohol.backend.controller;
 
 import com.nonalcohol.backend.dto.LabelCountDto;
 import com.nonalcohol.backend.dto.MemberRankingDto;
+import com.nonalcohol.backend.dto.WeeklyParticipationDto;
 import com.nonalcohol.backend.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +28,16 @@ public class DashboardController {
     public List<MemberRankingDto> getMonthlyRanking() {
         return dashboardService.getMonthlyRanking();
     }
+
+    @GetMapping("/weekly-participation")
+    public List<WeeklyParticipationDto> getWeeklyParticipation() {
+        return dashboardService.getWeeklyParticipationStats();
+    }
+    @GetMapping("/age")
+    public List<LabelCountDto> getAgeDistribution() {
+        return dashboardService.getAgeDistribution();
+    }
+
 
 
 }
